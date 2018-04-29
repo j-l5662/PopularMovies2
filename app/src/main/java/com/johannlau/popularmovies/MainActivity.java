@@ -1,20 +1,25 @@
 package com.johannlau.popularmovies;
 
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.johannlau.popularmovies.utilities.MovieDbUtils;
 import com.johannlau.popularmovies.utilities.NetworkUtils;
+import com.squareup.picasso.Picasso;
 
 import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -22,29 +27,36 @@ public class MainActivity extends AppCompatActivity {
 
     private MoviesAdapter mAdapter;
 
-    private TextView mTextView;
+    private RecyclerView mRecyclerView;
+    private ArrayList<String> moviesList;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        moviesList = new ArrayList<>();
 
-//        RecyclerView recyclerView = findViewById(R.id.rv_movies);
-//        int numberOfColumns = 2;
-//        recyclerView.setLayoutManager(new GridLayoutManager(this,numberOfColumns));
-        mTextView = findViewById(R.id.rv_movies);
+        mAdapter = new MoviesAdapter(MainActivity.this,moviesList);
         new LoadMovieTask().execute();
+
+        mRecyclerView = findViewById(R.id.rv_movies);
+        mRecyclerView.setHasFixedSize(true);
+        int numberOfColumns = 2;
+        mRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this,numberOfColumns));
+
+        mRecyclerView.setAdapter(mAdapter);
+
+
     }
-    public class LoadMovieTask extends AsyncTask<Void,Void,String> {
+    public class LoadMovieTask extends AsyncTask<Void,Void,ArrayList<String>> {
 
         @Override
-        protected String doInBackground(Void... voids) {
+        protected ArrayList<String> doInBackground(Void... voids) {
             URL url = NetworkUtils.buildURL(true);
 
             try {
                 String jsonMovieResponse = NetworkUtils.getURLResponse(url);
-                String jsonMovieTitle = MovieDbUtils.getMovieImages(MainActivity.this,jsonMovieResponse);
-                Log.v(TAG,"Title:" + jsonMovieTitle);
-                return jsonMovieTitle;
+                ArrayList<String> jsonMovieList = MovieDbUtils.getMovieImages(MainActivity.this,jsonMovieResponse);
+                return jsonMovieList;
             }
             catch (Exception e){
                 e.printStackTrace();
@@ -53,10 +65,25 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(String s) {
-            if( s!= null) mTextView.setText(s);
+        protected void onPostExecute(ArrayList<String> s) {
+            //Picasso.with(context).load("http://i.imgur.com/DvpvklR.png").into(imageView);
+            if( s!= null){
+//                Picasso.Builder builder = new Picasso.Builder(MainActivity.this);
+//                builder.listener(new Picasso.Listener()
+//                {
+//                    @Override
+//                    public void onImageLoadFailed(Picasso picasso, Uri uri, Exception exception)
+//                    {
+//                        exception.printStackTrace();
+//                    }
+//                });
+//                builder.build().load(s).into(mImageView);
+                moviesList = s;
+                mAdapter = new MoviesAdapter(MainActivity.this,moviesList);
+                mRecyclerView.setAdapter(mAdapter);
+            }
             else{
-                Log.v(TAG,"Error: Setting Text");
+                Log.v(TAG,"Error: OnPostExecute Text");
             }
         }
     }
