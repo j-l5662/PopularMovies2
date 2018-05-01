@@ -20,23 +20,27 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
 
     private String TAG = MoviesAdapter.class.getSimpleName();
     private Context context;
-    private ArrayList<String> urlList;
+    private ArrayList<MovieDetail> movieList;
 
+    final private ImageItemClickListener mOnClickListener;
+    public interface ImageItemClickListener {
+        void onListItemClick(int clickedItemIndex);
+    }
 
-    public MoviesAdapter(Context context, ArrayList<String> arrayList) {
+    public MoviesAdapter(Context context, ArrayList<MovieDetail> arrayList,ImageItemClickListener listener) {
         this.context = context;
-        this.urlList = arrayList;
+        this.movieList = arrayList;
+        this.mOnClickListener = listener;
     }
     @NonNull
     @Override
-    public MovieViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public MovieViewHolder onCreateViewHolder(@NonNull final ViewGroup parent, int viewType) {
 
 
         Context context = parent.getContext();
 
         LayoutInflater inflater = LayoutInflater.from(context);
         boolean attachParent = false;
-
         int height = parent.getMeasuredHeight()/2;
         View view = inflater.inflate(R.layout.recyclerview_movie,parent,attachParent);
         RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) view.getLayoutParams();
@@ -48,19 +52,15 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
 
     @Override
     public void onBindViewHolder(@NonNull MovieViewHolder holder, int position) {
-        Picasso.with(context).load(urlList.get(position)).into(holder.listMovieView);
+        Picasso.with(context).load(movieList.get(position).returnMoviePoster()).into(holder.listMovieView);
     }
 
     @Override
     public int getItemCount() {
-        return urlList.size();
+        return movieList.size();
     }
 
-    /**
-     * Called when a view has been clicked.
-     *
-     * @param v The view that was clicked.
-     */
+
 
     class MovieViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         ImageView listMovieView;
@@ -68,12 +68,14 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
         public MovieViewHolder(View itemView){
             super(itemView);
             listMovieView = itemView.findViewById(R.id.movie_view);
+            itemView.setOnClickListener(this);
         }
 
         @Override
-        public void onClick(View view){
-            Toast.makeText(view.getContext(),"Clicked: Position:" +getAdapterPosition(),Toast.LENGTH_SHORT).show();
-
+        public void onClick(View v) {
+            Log.v(TAG,"Clicked");
+            int clickedPosition = getAdapterPosition();
+            mOnClickListener.onListItemClick(clickedPosition);
         }
     }
 }

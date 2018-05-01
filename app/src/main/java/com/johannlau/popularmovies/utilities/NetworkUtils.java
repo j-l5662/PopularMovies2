@@ -1,5 +1,8 @@
 package com.johannlau.popularmovies.utilities;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 
 import java.io.IOException;
@@ -13,11 +16,13 @@ public class NetworkUtils {
 
     private static final String TAG = NetworkUtils.class.getName();
 
+    //Include API Key
     private final static String apiKey = "";
 
     private final static String popularURL = "http://api.themoviedb.org/3/movie/popular?api_key=";
     private final static String topRatedURL = "http://api.themoviedb.org/3/movie/top_rated?api_key=";
     //Sample URL https://api.themoviedb.org/3/movie/76341?api_key={api_key}
+
     public static URL buildURL(boolean choice){
         String baseURL;
         if(choice)  baseURL = popularURL;
@@ -57,5 +62,4 @@ public class NetworkUtils {
             urlConnection.disconnect();
         }
     }
-
 }
