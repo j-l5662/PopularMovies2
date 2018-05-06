@@ -1,8 +1,6 @@
 package com.johannlau.popularmovies.utilities;
 
 import android.content.Context;
-import android.graphics.Movie;
-import android.util.Log;
 
 import com.johannlau.popularmovies.MovieDetail;
 
@@ -28,7 +26,7 @@ public final class MovieDbUtils {
         JSONArray results = moviesJSON.getJSONArray("results");
         for(int i = 0; i < results.length(); i++){
             JSONObject result = results.getJSONObject(i);
-
+            int id = result.getInt("id");
             String movieImagePath = result.getString("poster_path");
             String releaseDate = result.getString("release_date");
             String plotSynopsis = result.getString("overview");
@@ -36,7 +34,7 @@ public final class MovieDbUtils {
             int rating = result.getInt("vote_average");
 
             String movieImageURL = baseURL + phoneSize + movieImagePath;
-            MovieDetail movieDetail = new MovieDetail(title,movieImageURL,plotSynopsis,rating,releaseDate);
+            MovieDetail movieDetail = new MovieDetail(id,title,movieImageURL,plotSynopsis,rating,releaseDate);
             movieList.add(movieDetail);
         }
         return movieList;

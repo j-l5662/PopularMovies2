@@ -7,7 +7,6 @@ import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
-import android.view.View;
 
 import com.johannlau.popularmovies.databinding.MoviedetailActivityBinding;
 import com.johannlau.popularmovies.utilities.MovieDbUtils;
@@ -53,6 +52,8 @@ public class MovieDetailActivity extends AppCompatActivity {
             binding.movieRatingTv.setText(Integer.toString(movieDetail.returnVoteAverage()) + "/10");
             binding.movieReleaseTv.setText(MovieDbUtils.edit_Date(movieDetail.returnReleaseDate()));
         }
+
+
 
     }
 }
