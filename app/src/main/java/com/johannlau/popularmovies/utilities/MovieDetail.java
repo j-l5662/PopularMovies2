@@ -1,4 +1,4 @@
-package com.johannlau.popularmovies;
+package com.johannlau.popularmovies.utilities;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -41,9 +41,8 @@ public class MovieDetail implements Parcelable{
         return 0;
     }
 
-    public String returnMovieTitle(){
-        return this.movieTitle;
-    }
+    public int returnMovieID() { return this.movieID;}
+    public String returnMovieTitle(){ return this.movieTitle;}
     public String returnMoviePoster(){
         return this.moviePoster;
     }

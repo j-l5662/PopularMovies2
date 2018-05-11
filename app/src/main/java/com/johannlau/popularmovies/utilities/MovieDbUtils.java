@@ -2,8 +2,6 @@ package com.johannlau.popularmovies.utilities;
 
 import android.content.Context;
 
-import com.johannlau.popularmovies.MovieDetail;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,7 +15,7 @@ public final class MovieDbUtils {
     private static final String baseURL = "http://image.tmdb.org/t/p/";
     private static final String phoneSize = "w185";
 
-    public static ArrayList<MovieDetail> getMovieDetails(Context context, String moviesJsonStr) throws JSONException {
+    public static ArrayList<MovieDetail> getsortedMovieDetails(String moviesJsonStr) throws JSONException {
 
         ArrayList<MovieDetail> movieList = new ArrayList<>();
 
@@ -39,6 +37,26 @@ public final class MovieDbUtils {
         }
         return movieList;
     }
+
+
+    public static MovieDetail getMovieDetails(String moviesJsonStr) throws JSONException {
+
+        JSONObject moviesJSON = new JSONObject(moviesJsonStr);
+
+
+
+        int id = moviesJSON.getInt("id");
+        String movieImagePath = moviesJSON.getString("poster_path");
+        String releaseDate = moviesJSON.getString("release_date");
+        String plotSynopsis = moviesJSON.getString("overview");
+        String title = moviesJSON.getString("original_title");
+        int rating = moviesJSON.getInt("vote_average");
+
+        String movieImageURL = baseURL + phoneSize + movieImagePath;
+        MovieDetail movieDetail = new MovieDetail(id,title,movieImageURL,plotSynopsis,rating,releaseDate);
+        return movieDetail;
+    }
+
 
     public static String edit_Date(String date){
         String year = date.substring(0,4);

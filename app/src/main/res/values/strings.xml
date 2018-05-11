@@ -3,9 +3,11 @@
     <string name="popular_movies">Most Popular</string>
     <string name="top_rated_movies">Highest Rated</string>
     <string name="favorite_movies">Favorite</string>
-    <string name="movie_detail">Movie Detail</string>
+    <string name="movie_detail">Movie Details</string>
     <string name="ratings_label">Rating</string>
     <string name="released_label">Released</string>
     <string name="synopsis_label">Synopsis</string>
-    <string name="trailer_label">Watch Trailer</string>
+    <string name="trailer_label">Watch Trailers</string>
+    <string name="review_label">Reviews</string>
+    <string name="favorite_label">Favorite</string>
 </resources>

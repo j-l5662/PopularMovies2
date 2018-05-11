@@ -1,14 +1,15 @@
-package com.johannlau.popularmovies;
+package com.johannlau.popularmovies.adapters;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.johannlau.popularmovies.utilities.MovieDetail;
+import com.johannlau.popularmovies.R;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -19,16 +20,20 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
     private Context context;
     private ArrayList<MovieDetail> movieList;
 
+    private int mCount;
+
     final private ImageItemClickListener mOnClickListener;
     public interface ImageItemClickListener {
         void onListItemClick(int clickedItemIndex);
     }
 
-    public MoviesAdapter(Context context, ArrayList<MovieDetail> arrayList,ImageItemClickListener listener) {
+    public MoviesAdapter(Context context, ArrayList<MovieDetail> arrayList,ImageItemClickListener listener,int count) {
         this.context = context;
         this.movieList = arrayList;
         this.mOnClickListener = listener;
+        this.mCount = count;
     }
+
     @NonNull
     @Override
     public MovieViewHolder onCreateViewHolder(@NonNull final ViewGroup parent, int viewType) {
@@ -54,7 +59,7 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
 
     @Override
     public int getItemCount() {
-        return movieList.size();
+        return mCount;
     }
 
 
@@ -70,7 +75,6 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
 
         @Override
         public void onClick(View v) {
-            Log.v(TAG,"Clicked");
             int clickedPosition = getAdapterPosition();
             mOnClickListener.onListItemClick(clickedPosition);
         }

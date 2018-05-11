@@ -2,6 +2,8 @@ package com.johannlau.popularmovies;
 
 
 import android.content.*;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.*;
 import android.os.*;
 import android.support.annotation.*;
@@ -14,6 +16,9 @@ import android.util.*;
 import android.view.*;
 import android.widget.*;
 
+import com.johannlau.popularmovies.adapters.MoviesAdapter;
+import com.johannlau.popularmovies.data.FavoriteMovieDbHelper;
+import com.johannlau.popularmovies.data.MovieContract;
 import com.johannlau.popularmovies.utilities.*;
 
 import java.net.*;
@@ -26,6 +31,8 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     private static final String lifecycleCallback = "callback";
     private static final String MOVIEDETAILS_EXTRA = "moviedetail";
     private static final int MOVIE_LOADER = 22;
+
+    private SQLiteDatabase mDb;
 
     private MoviesAdapter mAdapter;
 
@@ -46,26 +53,22 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
             }
         }
 
-        mAdapter = new MoviesAdapter(MainActivity.this,moviesList,this);
+        mAdapter = new MoviesAdapter(MainActivity.this,moviesList,this,moviesList.size());
 //        new LoadMovieTask().execute(selection_choice);
 
         Bundle bundle = new Bundle();
         bundle.putBoolean(MOVIEDETAILS_EXTRA, selection_choice);
+        movieQuery(bundle);
 
-        LoaderManager loaderManager = getSupportLoaderManager();
-        Loader<ArrayList<MovieDetail>> loader = loaderManager.getLoader(MOVIE_LOADER);
-
-        if(loader == null){
-            loaderManager.initLoader(MOVIE_LOADER,bundle,this);
-        }
-        else {
-            loaderManager.restartLoader(MOVIE_LOADER, bundle, this);
-        }
         mRecyclerView = findViewById(R.id.rv_movies);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this,COLUMNS));
 
         mRecyclerView.setAdapter(mAdapter);
+
+        //Data base initialization
+        FavoriteMovieDbHelper database = new FavoriteMovieDbHelper(this);
+        mDb = database.getReadableDatabase();
     }
 
     @Override
@@ -84,19 +87,28 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+        Bundle bundle = new Bundle();
         switch (id){
             case R.id.topRated_movie:
                 selection_choice = false;
 //                new LoadMovieTask().execute(selection_choice);
+                bundle.putBoolean(MOVIEDETAILS_EXTRA, selection_choice);
+                movieQuery(bundle);
                 break;
             case R.id.popular_movie:
                 selection_choice = true;
 //                new LoadMovieTask().execute(selection_choice);
+                bundle.putBoolean(MOVIEDETAILS_EXTRA, selection_choice);
+                movieQuery(bundle);
                 break;
             case R.id.favorite_movie:
                 // TODO: Add favorite sorting
-//                selection_choice = true;
-//                new LoadMovieTask().execute(selection_choice);
+                Cursor cursor = getAllFavMovies();
+
+//                moviesList = data;
+                mAdapter = new MoviesAdapter(MainActivity.this,moviesList,MainActivity.this,moviesList.size());
+                mRecyclerView.setAdapter(mAdapter);
+
                 break;
             default:
                 Log.v(TAG, "Error: Wrong Item");
@@ -134,9 +146,9 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                 try {
 
                     if (isOnline()) {
-                        URL url = NetworkUtils.buildURL(choice);
+                        URL url = NetworkUtils.buildsortURL(choice);
                         String jsonMovieResponse = NetworkUtils.getURLResponse(url);
-                        ArrayList<MovieDetail> jsonMovieList = MovieDbUtils.getMovieDetails(MainActivity.this, jsonMovieResponse);
+                        ArrayList<MovieDetail> jsonMovieList = MovieDbUtils.getsortedMovieDetails(jsonMovieResponse);
                         return jsonMovieList;
                     } else {
                         Toast.makeText(MainActivity.this,"Error Connecting to Internet",Toast.LENGTH_SHORT).show();
@@ -156,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     public void onLoadFinished(@NonNull Loader<ArrayList<MovieDetail>> loader, ArrayList<MovieDetail> data) {
         if( data!= null){
             moviesList = data;
-            mAdapter = new MoviesAdapter(MainActivity.this,moviesList,MainActivity.this);
+            mAdapter = new MoviesAdapter(MainActivity.this,moviesList,MainActivity.this,moviesList.size());
             mRecyclerView.setAdapter(mAdapter);
         }
         else{
@@ -169,10 +181,33 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
     }
 
+    private void movieQuery(Bundle bundle){
+        LoaderManager loaderManager = getSupportLoaderManager();
+        Loader<ArrayList<MovieDetail>> loader = loaderManager.getLoader(MOVIE_LOADER);
+
+        if(loader == null){
+            loaderManager.initLoader(MOVIE_LOADER,bundle,this);
+        }
+        else {
+            loaderManager.restartLoader(MOVIE_LOADER, bundle, this);
+        }
+    }
     public boolean isOnline(){
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
         return networkInfo != null && networkInfo.isConnectedOrConnecting();
+    }
+
+    private Cursor getAllFavMovies() {
+        return mDb.query(
+                MovieContract.MovieEntry.TABLE_NAME,
+                null,
+                null,
+                null,
+                null,
+                null,
+                MovieContract.MovieEntry._ID
+        );
     }
 }
