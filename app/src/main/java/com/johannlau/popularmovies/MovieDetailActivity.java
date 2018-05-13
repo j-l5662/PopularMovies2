@@ -1,6 +1,9 @@
 package com.johannlau.popularmovies;
 
-import android.content.*;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.databinding.DataBindingUtil;
 import android.graphics.Color;
@@ -10,19 +13,18 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
-import android.support.v4.app.LoaderManager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.*;
-import android.view.*;
-import android.widget.Toast;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.View;
 
+import com.facebook.stetho.Stetho;
 import com.johannlau.popularmovies.data.FavoriteMovieDbHelper;
 import com.johannlau.popularmovies.data.MovieContract;
 import com.johannlau.popularmovies.databinding.MoviedetailActivityBinding;
-import com.johannlau.popularmovies.utilities.*;
+import com.johannlau.popularmovies.utilities.MovieDbUtils;
+import com.johannlau.popularmovies.utilities.MovieDetail;
 import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
 
 public class MovieDetailActivity extends AppCompatActivity {
 
@@ -32,7 +34,7 @@ public class MovieDetailActivity extends AppCompatActivity {
 
     private SQLiteDatabase mDb;
 
-    SharedPreferences mSharedPreferences;
+    SharedPreferences mPreferences;
     private static final String favorite_choice = "favorite";
     private final int ADJUSTHEIGHT = 64;
     private final int ADJUSTWIDTH = 8;
@@ -45,6 +47,12 @@ public class MovieDetailActivity extends AppCompatActivity {
 
     private boolean favorited = false;
 
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mDb.close();
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -81,9 +89,14 @@ public class MovieDetailActivity extends AppCompatActivity {
         mDb = database.getWritableDatabase();
 
         //Shared Preference for Favorite Movie
-        mSharedPreferences = getSharedPreferences(getString(R.string.SharedPreferenceSetting) + movieDetail.returnMovieTitle(),Context.MODE_PRIVATE);
-        favorited = mSharedPreferences.getBoolean(favorite_choice,false);
-        changeButtonColor(favorited);
+        mPreferences = this.getPreferences(Context.MODE_PRIVATE);
+        favorited = mPreferences.getBoolean(movieDetail.returnMovieTitle()+favorite_choice,favorited);
+        if(favorited){
+            binding.favoriteBtn.setColorFilter(Color.YELLOW);
+        }
+        else{
+            binding.favoriteBtn.setColorFilter(Color.WHITE);
+        }
     }
 
     public class TrailerHandler implements View.OnClickListener {
@@ -111,35 +124,28 @@ public class MovieDetailActivity extends AppCompatActivity {
     }
 
     public void onClickFavoriteReview(View view) {
-        ContentValues contentValues = new ContentValues();
 
-        contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID, movieDetail.returnMovieID());
-        contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_TITLE,movieDetail.returnMovieTitle());
-
-        Uri uri = getContentResolver().insert(MovieContract.MovieEntry.CONTENT_URI,contentValues);
-        if(uri != null ){
-            Toast.makeText(getBaseContext(), uri.toString(),Toast.LENGTH_SHORT).show();
-        }
-        SharedPreferences.Editor editor = mSharedPreferences.edit();
-        if(!favorited){
-            favorited = true;
-            editor.putBoolean(favorite_choice,favorited);
-            editor.apply();
+        if(favorited){
+            Uri deletedUri = MovieContract.MovieEntry.CONTENT_URI;
+            deletedUri = deletedUri.buildUpon().appendPath(Integer.toString(movieDetail.returnMovieID())).build();
+            int deletedItem = getContentResolver().delete(deletedUri,null,null);
+            Log.v(TAG,"Deleted: " + Integer.toString(deletedItem));
             changeButtonColor(favorited);
         }
         else{
-            favorited = false;
-            editor.putBoolean(favorite_choice,favorited);
-            editor.apply();
+            ContentValues contentValues = new ContentValues();
+
+            contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID, movieDetail.returnMovieID());
+            contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_TITLE,movieDetail.returnMovieTitle());
+
+            Uri uri = getContentResolver().insert(MovieContract.MovieEntry.CONTENT_URI,contentValues);
+            if(uri != null ){
+                Log.v(TAG,"Inserted: " + uri.toString());
+            }
             changeButtonColor(favorited);
         }
-
-        //TODO CLEARING ALL DATA
-//        Uri uri = MovieContract.MovieEntry.CONTENT_URI;
-//        uri.buildUpon().appendPath().build();
-//        int id = getContentResolver().delete(,);
-       // finish();
     }
+
     public boolean isOnline(){
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -147,11 +153,18 @@ public class MovieDetailActivity extends AppCompatActivity {
         return networkInfo != null && networkInfo.isConnectedOrConnecting();
     }
 
-    private void changeButtonColor(boolean favorite_choice){
-        if(favorite_choice){
+    private void changeButtonColor(boolean selection){
+        SharedPreferences.Editor editor = mPreferences.edit();
+        if(!selection){
+            favorited = true;
+            editor.putBoolean(movieDetail.returnMovieTitle()+favorite_choice,favorited);
+            editor.apply();
             binding.favoriteBtn.setColorFilter(Color.YELLOW);
         }
         else{
+            favorited = false;
+            editor.putBoolean(movieDetail.returnMovieTitle()+favorite_choice,favorited);
+            editor.apply();
             binding.favoriteBtn.setColorFilter(Color.WHITE);
         }
     }

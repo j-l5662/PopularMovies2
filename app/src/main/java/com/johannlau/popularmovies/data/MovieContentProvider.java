@@ -11,9 +11,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
+import android.nfc.Tag;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 public class MovieContentProvider extends ContentProvider {
 
@@ -28,8 +30,8 @@ public class MovieContentProvider extends ContentProvider {
     public static UriMatcher buildUriMatcher(){
         UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
-        uriMatcher.addURI(MovieContract.AUTHORITY,MovieContract.PATH_ID,MOVIES);
-        uriMatcher.addURI(MovieContract.AUTHORITY,MovieContract.PATH_ID + "/#",MOVIES_ID);
+        uriMatcher.addURI(MovieContract.AUTHORITY,MovieContract.PATH_MOVIES,MOVIES);
+        uriMatcher.addURI(MovieContract.AUTHORITY,MovieContract.PATH_MOVIES + "/#",MOVIES_ID);
 
         return uriMatcher;
     }
@@ -63,7 +65,7 @@ public class MovieContentProvider extends ContentProvider {
         Context context = getContext();
 
         mfavoriteMovieDbHelper = new FavoriteMovieDbHelper(context);
-        return false;
+        return true;
     }
 
     /**
@@ -133,7 +135,7 @@ public class MovieContentProvider extends ContentProvider {
         final SQLiteDatabase db = mfavoriteMovieDbHelper.getWritableDatabase();
 
         int match = uriMatcher.match(uri);
-        Cursor retCursor = null;
+        Cursor retCursor;
 
         switch(match) {
             case MOVIES:
@@ -193,7 +195,7 @@ public class MovieContentProvider extends ContentProvider {
         final SQLiteDatabase db = mfavoriteMovieDbHelper.getWritableDatabase();
 
         int match = buildUriMatcher().match(uri);
-        Uri returnUri = null;
+        Uri returnUri;
 
         switch(match) {
             case MOVIES:
@@ -201,7 +203,7 @@ public class MovieContentProvider extends ContentProvider {
                 if(id > 0){
                     returnUri = ContentUris.withAppendedId(MovieContract.MovieEntry.CONTENT_URI,id);
                 } else {
-                    throw new SQLiteException();
+                    throw new android.database.SQLException("Failed to Insert Into " + uri.toString());
                 }
                 break;
             default:
@@ -241,11 +243,12 @@ public class MovieContentProvider extends ContentProvider {
 
         int match = buildUriMatcher().match(uri);
         int movieDeleted;
+        Log.v("Content Provider", uri.toString());
 
         switch(match) {
             case MOVIES_ID:
                 String id = uri.getPathSegments().get(1);
-                movieDeleted = db.delete(MovieContract.MovieEntry.TABLE_NAME,"_id=?",new String[]{id});
+                movieDeleted = db.delete(MovieContract.MovieEntry.TABLE_NAME,MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID+"=?",new String[]{id});
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown URI: " + uri.toString());

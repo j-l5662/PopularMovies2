@@ -16,6 +16,7 @@ import android.util.*;
 import android.view.*;
 import android.widget.*;
 
+import com.facebook.stetho.Stetho;
 import com.johannlau.popularmovies.adapters.MoviesAdapter;
 import com.johannlau.popularmovies.data.FavoriteMovieDbHelper;
 import com.johannlau.popularmovies.data.MovieContract;
@@ -31,13 +32,13 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     private static final String lifecycleCallback = "callback";
     private static final String MOVIEDETAILS_EXTRA = "movieDetail";
 
-    private static final int MOVIE_LOADER = 20;
+    private static final int FAVORITE_MOVIE_LOADER = 20;
     private static final int MOVIES_LOADER = 22;
-
 
     private SQLiteDatabase mDb;
 
     private MoviesAdapter mAdapter;
+
 
     private RecyclerView mRecyclerView;
     private ArrayList<MovieDetail> moviesList;
@@ -57,7 +58,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
         }
 
         mAdapter = new MoviesAdapter(MainActivity.this,moviesList,this,moviesList.size());
-//        new LoadMovieTask().execute(selection_choice);
 
         Bundle bundle = new Bundle();
         bundle.putBoolean(MOVIEDETAILS_EXTRA, selection_choice);
@@ -72,7 +72,16 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
         //Data base initialization
         FavoriteMovieDbHelper database = new FavoriteMovieDbHelper(this);
         mDb = database.getReadableDatabase();
+
+        Stetho.initialize(Stetho.newInitializerBuilder(this).enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this)).build());
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mDb.close();
+    }
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -94,23 +103,24 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
         switch (id){
             case R.id.topRated_movie:
                 selection_choice = false;
-//                new LoadMovieTask().execute(selection_choice);
                 bundle.putBoolean(MOVIEDETAILS_EXTRA, selection_choice);
                 movieQuery(bundle);
                 break;
             case R.id.popular_movie:
                 selection_choice = true;
-//                new LoadMovieTask().execute(selection_choice);
                 bundle.putBoolean(MOVIEDETAILS_EXTRA, selection_choice);
                 movieQuery(bundle);
                 break;
             case R.id.favorite_movie:
-                // TODO: Add favorite sorting
-                Cursor cursor = getAllFavMovies();
-//                moviesList = data;
-                mAdapter = new MoviesAdapter(MainActivity.this,moviesList,MainActivity.this,moviesList.size());
-                mRecyclerView.setAdapter(mAdapter);
+                LoaderManager loaderManager = getSupportLoaderManager();
+                Loader<ArrayList<MovieDetail>> loader = loaderManager.getLoader(FAVORITE_MOVIE_LOADER);
 
+                if(loader == null){
+                    loaderManager.initLoader(FAVORITE_MOVIE_LOADER,bundle,favoriteMovieLoader);
+                }
+                else {
+                    loaderManager.restartLoader(FAVORITE_MOVIE_LOADER, bundle, favoriteMovieLoader);
+                }
                 break;
             default:
                 Log.v(TAG, "Error: Wrong Item");
@@ -177,9 +187,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader<ArrayList<MovieDetail>> loader) {
-
-    }
+    public void onLoaderReset(@NonNull Loader<ArrayList<MovieDetail>> loader) {    }
 
     private void movieQuery(Bundle bundle){
         LoaderManager loaderManager = getSupportLoaderManager();
@@ -210,4 +218,68 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                 MovieContract.MovieEntry._ID
         );
     }
+
+    private LoaderManager.LoaderCallbacks<ArrayList<MovieDetail>> favoriteMovieLoader = new LoaderManager.LoaderCallbacks<ArrayList<MovieDetail>>() {
+        @NonNull
+        @Override
+        public Loader<ArrayList<MovieDetail>> onCreateLoader(int id, @Nullable final Bundle args) {
+            return new AsyncTaskLoader<ArrayList<MovieDetail>>(MainActivity.this) {
+                /**
+                 * Subclasses must implement this to take care of loading their data,
+                 * as per {@link #startLoading()}.  This is not called by clients directly,
+                 * but as a result of a call to {@link #startLoading()}.
+                 * This will always be called from the process's main thread.
+                 */
+                @Override
+                protected void onStartLoading() {
+                    super.onStartLoading();
+                    if (args == null) {
+                        return;
+                    }
+                    forceLoad();
+                }
+
+                @Nullable
+                @Override
+                public ArrayList<MovieDetail> loadInBackground() {
+                    Cursor cursor = getAllFavMovies();
+                    ArrayList<MovieDetail> favoritedMovies = new ArrayList<>();
+                    try{
+                        while(cursor.moveToNext()){
+                            int movieIDColumn = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID);
+//                            int movieTitle = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_TITLE);
+                            int movieID = cursor.getInt(movieIDColumn);
+                            URL url = NetworkUtils.buildmovieURL(movieID);
+                            Log.v(TAG,"Favorite Movie " +url.toString());
+                            String jsonMovieDetails = NetworkUtils.getURLResponse(url);
+                            MovieDetail favMovie = MovieDbUtils.getMovieDetails(jsonMovieDetails);
+                            favoritedMovies.add(favMovie);
+                        }
+                    } catch (Exception e){
+                        e.printStackTrace();
+                        Log.v(TAG,"Error Querying Data");
+                    }
+                    finally {
+                        cursor.close();
+                    }
+                    return favoritedMovies;
+                }
+            };
+        }
+
+        @Override
+        public void onLoadFinished(@NonNull Loader<ArrayList<MovieDetail>> loader, ArrayList<MovieDetail> data) {
+            if( data!= null){
+                moviesList = data;
+                mAdapter = new MoviesAdapter(MainActivity.this,moviesList,MainActivity.this,moviesList.size());
+                mRecyclerView.setAdapter(mAdapter);
+            }
+            else{
+                Log.v(TAG,"Error: OnLoadFinished Setting Adapter");
+            }
+        }
+
+        @Override
+        public void onLoaderReset(@NonNull Loader<ArrayList<MovieDetail>> loader) {        }
+    };
 }

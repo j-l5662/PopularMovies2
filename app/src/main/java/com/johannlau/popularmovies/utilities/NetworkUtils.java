@@ -52,7 +52,7 @@ public class NetworkUtils {
             return null;
         }
         String videoID = Integer.toString(id);
-        String baseURL = new StringBuilder(movieURL).insert(movieURL.length() - 10, videoID).toString();
+        String baseURL = new StringBuilder(movieURL).insert(movieURL.length() - 9, videoID).toString();
         Log.v(TAG, baseURL);
         Uri builtUri = Uri.parse(baseURL + apiKey).buildUpon()
                 .build();
