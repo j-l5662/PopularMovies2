@@ -29,8 +29,11 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     private static final String TAG = MainActivity.class.getName();
     private static final int COLUMNS = 2;
     private static final String lifecycleCallback = "callback";
-    private static final String MOVIEDETAILS_EXTRA = "moviedetail";
-    private static final int MOVIE_LOADER = 22;
+    private static final String MOVIEDETAILS_EXTRA = "movieDetail";
+
+    private static final int MOVIE_LOADER = 20;
+    private static final int MOVIES_LOADER = 22;
+
 
     private SQLiteDatabase mDb;
 
@@ -104,7 +107,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
             case R.id.favorite_movie:
                 // TODO: Add favorite sorting
                 Cursor cursor = getAllFavMovies();
-
 //                moviesList = data;
                 mAdapter = new MoviesAdapter(MainActivity.this,moviesList,MainActivity.this,moviesList.size());
                 mRecyclerView.setAdapter(mAdapter);
@@ -129,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
     @NonNull
     @Override
-    public Loader<ArrayList<MovieDetail>> onCreateLoader(int id, @Nullable final Bundle args) {
+    public Loader<ArrayList<MovieDetail>> onCreateLoader(final int id, @Nullable final Bundle args) {
         return new AsyncTaskLoader<ArrayList<MovieDetail>>(this) {
             @Override
             protected void onStartLoading() {
@@ -142,9 +144,9 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
             @Override
             public ArrayList<MovieDetail> loadInBackground() {
+
                 boolean choice = args.getBoolean(MOVIEDETAILS_EXTRA);
                 try {
-
                     if (isOnline()) {
                         URL url = NetworkUtils.buildsortURL(choice);
                         String jsonMovieResponse = NetworkUtils.getURLResponse(url);
@@ -159,8 +161,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                     return null;
                 }
             }
-
-
         };
     }
 
@@ -183,13 +183,13 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
     private void movieQuery(Bundle bundle){
         LoaderManager loaderManager = getSupportLoaderManager();
-        Loader<ArrayList<MovieDetail>> loader = loaderManager.getLoader(MOVIE_LOADER);
+        Loader<ArrayList<MovieDetail>> loader = loaderManager.getLoader(MOVIES_LOADER);
 
         if(loader == null){
-            loaderManager.initLoader(MOVIE_LOADER,bundle,this);
+            loaderManager.initLoader(MOVIES_LOADER,bundle,this);
         }
         else {
-            loaderManager.restartLoader(MOVIE_LOADER, bundle, this);
+            loaderManager.restartLoader(MOVIES_LOADER, bundle, this);
         }
     }
     public boolean isOnline(){

@@ -21,7 +21,7 @@ public class NetworkUtils {
 
     private final static String movieURL = "http://api.themoviedb.org/3/movie/?api_key=";
 
-    private final static String popularURL = "http://api.themoviedb.org/3/movie/?api_key=";
+    private final static String popularURL = "http://api.themoviedb.org/3/movie/popular?api_key=";
     private final static String topRatedURL = "http://api.themoviedb.org/3/movie/top_rated?api_key=";
 
     private final static String trailerURL = "http://api.themoviedb.org/3/movie//videos?api_key=";
@@ -101,7 +101,6 @@ public class NetworkUtils {
         URL url = null;
 
         try {
-
             url = new URL(builtUri.toString());
             Log.v(TAG,"Review: "+url.toString());
         } catch (MalformedURLException e){

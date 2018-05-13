@@ -26,6 +26,13 @@
         <activity android:name=".MovieReviewActivity">
 
         </activity>
+        <provider
+            android:name="com.johannlau.popularmovies.data.MovieContentProvider"
+            android:authorities="com.johannlau.popularmovies"
+            android:exported="false"/>
+
+
+
     </application>
 
 </manifest>
