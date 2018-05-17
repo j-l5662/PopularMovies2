@@ -28,9 +28,9 @@ public class NetworkUtils {
     private final static String reviewURL = "http://api.themoviedb.org/3/movie//reviews?api_key=";
     //Sample URL https://api.themoviedb.org/3/movie/76341?api_key={api_key}
 
-    public static URL buildsortURL(boolean choice) {
+    public static URL buildsortURL(int choice) {
         String baseURL;
-        if(choice)  baseURL = popularURL;
+        if(choice == 1)  baseURL = popularURL;
         else{ baseURL = topRatedURL; }
 
         Uri builtUri = Uri.parse(baseURL + apiKey).buildUpon()
@@ -53,7 +53,6 @@ public class NetworkUtils {
         }
         String videoID = Integer.toString(id);
         String baseURL = new StringBuilder(movieURL).insert(movieURL.length() - 9, videoID).toString();
-        Log.v(TAG, baseURL);
         Uri builtUri = Uri.parse(baseURL + apiKey).buildUpon()
                 .build();
 
@@ -74,7 +73,6 @@ public class NetworkUtils {
         }
         String videoID = Integer.toString(id);
         String baseURL = new StringBuilder(trailerURL).insert(trailerURL.length()-16,videoID).toString();
-        Log.v(TAG,baseURL);
         Uri builtUri = Uri.parse(baseURL + apiKey).buildUpon()
                 .build();
 
@@ -102,7 +100,6 @@ public class NetworkUtils {
 
         try {
             url = new URL(builtUri.toString());
-            Log.v(TAG,"Review: "+url.toString());
         } catch (MalformedURLException e){
             e.printStackTrace();
         }

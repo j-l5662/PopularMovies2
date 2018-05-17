@@ -16,6 +16,8 @@ public class ReviewsAdapter extends ArrayAdapter<ReviewInfo>{
 
     private String TAG = ReviewsAdapter.class.getSimpleName();
 
+    private String HYPEN = "-";
+
     public ReviewsAdapter(Activity context, List<ReviewInfo> reviews){
         super(context,0,reviews);
     }
@@ -31,7 +33,7 @@ public class ReviewsAdapter extends ArrayAdapter<ReviewInfo>{
 
         //Load Reviews into the activity and set up activity/layout
         TextView mReviewerName = convertView.findViewById(R.id.reviewer_name);
-        mReviewerName.setText(reviewInfo.getReviewerName());
+        mReviewerName.setText(HYPEN+reviewInfo.getReviewerName());
         TextView mReview = convertView.findViewById(R.id.movie_review);
         mReview.setText(reviewInfo.getReview());
 

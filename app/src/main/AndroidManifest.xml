@@ -18,7 +18,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".MovieDetailActivity">
-            
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.johannlau.popularmovies.MainActivity"/>
         </activity>
         <activity android:name=".MovieTrailerActivity">
 
