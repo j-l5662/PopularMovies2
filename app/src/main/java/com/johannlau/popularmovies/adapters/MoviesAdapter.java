@@ -32,6 +32,7 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
         this.movieList = arrayList;
         this.mOnClickListener = listener;
         this.mCount = count;
+
     }
 
     @NonNull
@@ -62,7 +63,10 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
         return mCount;
     }
 
-
+    public void clearAdapter(){
+        movieList.clear();
+        notifyDataSetChanged();
+    }
 
     class MovieViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         ImageView listMovieView;

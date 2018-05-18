@@ -31,8 +31,11 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     private static final String lifecycleCallback = "callback";
     private static final String MOVIEDETAILS_EXTRA = "movieDetail";
 
-    private static final int FAVORITE_MOVIE_LOADER = 20;
+    private static final int FAVORITE_MOVIE_LOADER = 12;
     private static final int MOVIES_LOADER = 22;
+
+
+    private static Bundle mRecyclerViewState;
 
     private SQLiteDatabase mDb;
 
@@ -43,6 +46,8 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     private ArrayList<MovieDetail> moviesList;
 
     private int selectionSort = 1;
+    Parcelable pState;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
         }
 
         mAdapter = new MoviesAdapter(MainActivity.this,moviesList,this,moviesList.size());
-
+        mAdapter.setHasStableIds(true);
         Bundle bundle = new Bundle();
         bundle.putInt(MOVIEDETAILS_EXTRA, selectionSort);
 
@@ -81,21 +86,20 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
       //  Stetho.initialize(Stetho.newInitializerBuilder(this).enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this)).build());
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Bundle bundle;
-        if(selectionSort == 2){
-            bundle = new Bundle();
-            bundle.putInt(MOVIEDETAILS_EXTRA,selectionSort);
-            favoriteQuery(bundle);
-        }
-        else{
-            bundle = new Bundle();
-            bundle.putInt(MOVIEDETAILS_EXTRA,selectionSort);
-            movieQuery(bundle);
-        }
-    }
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//        Bundle bundle;
+//        if (selectionSort == 2) {
+//            bundle = new Bundle();
+//            bundle.putInt(MOVIEDETAILS_EXTRA, selectionSort);
+//            favoriteQuery(bundle);
+//        } else {
+//            bundle = new Bundle();
+//            bundle.putInt(MOVIEDETAILS_EXTRA, selectionSort);
+//            movieQuery(bundle);
+//        }
+//    }
 
     @Override
     protected void onDestroy() {
@@ -103,13 +107,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
         mDb.close();
     }
 
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt(lifecycleCallback,selectionSort);
-        //outState.putBoolean(lifecycleCallback,selection_choice);
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -127,23 +124,18 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                 selectionSort = 0;
                 bundle = new Bundle();
                 bundle.putInt(MOVIEDETAILS_EXTRA,selectionSort);
-                Log.v(TAG,"TopRated Selected " + Integer.toString(selectionSort));
                 movieQuery(bundle);
-
-
                 break;
             case R.id.popular_movie:
                 selectionSort = 1;
                 bundle = new Bundle();
                 bundle.putInt(MOVIEDETAILS_EXTRA,selectionSort);
-                Log.v(TAG,"Popular Selected " + Integer.toString(selectionSort));
                 movieQuery(bundle);
 
                 break;
             case R.id.favorite_movie:
                 selectionSort = 2;
                 bundle = new Bundle();
-                Log.v(TAG,"Favorite Selected " + Integer.toString(selectionSort));
                 bundle.putInt(MOVIEDETAILS_EXTRA,selectionSort);
                 favoriteQuery(bundle);
                 break;
@@ -219,25 +211,32 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     private void movieQuery(Bundle bundle){
         LoaderManager loaderManager = getSupportLoaderManager();
         Loader<ArrayList<MovieDetail>> loader = loaderManager.getLoader(MOVIES_LOADER);
-
+        Loader<ArrayList<MovieDetail>> favloader = loaderManager.getLoader(FAVORITE_MOVIE_LOADER);
         if(loader == null){
             loaderManager.initLoader(MOVIES_LOADER,bundle,querySortedMovieLoader);
         }
         else {
+            Log.v(TAG,"!@#@!#@onloadfinish" + Integer.toString(selectionSort));
             loaderManager.restartLoader(MOVIES_LOADER, bundle, querySortedMovieLoader);
+        }
+        if(favloader != null){
+            loaderManager.destroyLoader(FAVORITE_MOVIE_LOADER);
         }
     }
 
     private void favoriteQuery(Bundle bundle) {
-
         LoaderManager loaderManager = getSupportLoaderManager();
-        Loader<ArrayList<MovieDetail>> loader = loaderManager.getLoader(FAVORITE_MOVIE_LOADER);
+        Loader<ArrayList<MovieDetail>> favloader = loaderManager.getLoader(FAVORITE_MOVIE_LOADER);
+        Loader<ArrayList<MovieDetail>> queryloader = loaderManager.getLoader(MOVIES_LOADER);
 
-        if(loader == null){
+        if(favloader == null){
             loaderManager.initLoader(FAVORITE_MOVIE_LOADER,bundle,favoriteMovieLoader);
         }
         else {
             loaderManager.restartLoader(FAVORITE_MOVIE_LOADER, bundle, favoriteMovieLoader);
+        }
+        if(queryloader != null){
+            loaderManager.destroyLoader(MOVIES_LOADER);
         }
     }
     public boolean isOnline(){
@@ -276,11 +275,9 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                 @Override
                 public ArrayList<MovieDetail> loadInBackground() {
                     int choice = args.getInt(MOVIEDETAILS_EXTRA);
-                    Log.v(TAG,"QUERY!! " + Integer.toString(choice));
                     try {
                         if (isOnline()) {
                             URL url = NetworkUtils.buildsortURL(choice);
-                            Log.v(TAG,"Loaded: "+url.toString());
                             String jsonMovieResponse = NetworkUtils.getURLResponse(url);
                             ArrayList<MovieDetail> jsonMovieList = MovieDbUtils.getsortedMovieDetails(jsonMovieResponse);
                             return jsonMovieList;
@@ -298,10 +295,14 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
         @Override
         public void onLoadFinished(@NonNull Loader<ArrayList<MovieDetail>> loader, ArrayList<MovieDetail> data) {
+//            if(selectionSort == 2){
+//                return;
+//            }
             if( data!= null){
                 moviesList = data;
+                mAdapter.clearAdapter();
                 mAdapter = new MoviesAdapter(MainActivity.this,moviesList,MainActivity.this,moviesList.size());
-                mAdapter.notifyDataSetChanged();
+
                 mRecyclerView.setAdapter(mAdapter);
                 getLoaderManager().destroyLoader(loader.getId());
             }
@@ -312,7 +313,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
         @Override
         public void onLoaderReset(@NonNull Loader<ArrayList<MovieDetail>> loader) {
-            Log.v(TAG,"QUERY RESET");
         }
     };
     private LoaderManager.LoaderCallbacks<ArrayList<MovieDetail>> favoriteMovieLoader = new LoaderManager.LoaderCallbacks<ArrayList<MovieDetail>>() {
@@ -365,16 +365,19 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
         @Override
         public void onLoadFinished(@NonNull Loader<ArrayList<MovieDetail>> loader, ArrayList<MovieDetail> data) {
+//            if(selectionSort != 2){
+//                return;
+//            }
             if( data!= null){
                 if( data.size() == 0 ) {
-                    Toast.makeText(MainActivity.this,"No Favorites",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this,"No Movies",Toast.LENGTH_SHORT).show();
                 }
                 moviesList = data;
 
                 mAdapter = new MoviesAdapter(MainActivity.this,moviesList,MainActivity.this,moviesList.size());
-                mAdapter.notifyDataSetChanged();
+
                 mRecyclerView.setAdapter(mAdapter);
-                getSupportLoaderManager().destroyLoader(loader.getId());
+                mAdapter.notifyDataSetChanged();
             }
             else{
                 Log.v(TAG,"Error: OnLoadFinished Setting Adapter");
@@ -383,7 +386,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
         @Override
         public void onLoaderReset(@NonNull Loader<ArrayList<MovieDetail>> loader) {
-            Log.v(TAG,"Favorite RESET");
         }
     };
 }

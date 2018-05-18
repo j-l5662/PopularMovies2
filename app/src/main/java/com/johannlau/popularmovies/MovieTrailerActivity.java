@@ -9,6 +9,7 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.*;
 import android.util.*;
+import android.view.View;
 import android.widget.*;
 
 import com.johannlau.popularmovies.adapters.TrailersAdapter;
@@ -101,6 +102,18 @@ public class MovieTrailerActivity extends AppCompatActivity implements LoaderMan
             trailersInfos = data;
             trailersAdapter = new TrailersAdapter(MovieTrailerActivity.this,trailersInfos);
             listView.setAdapter(trailersAdapter);
+            listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                    TrailersInfo trailersInfo = (TrailersInfo) parent.getItemAtPosition(position);
+                    String videoURI = trailersInfo.formVideo_URL();
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.putExtra(Intent.EXTRA_TEXT,videoURI);
+                    intent.setType("text/plain");
+                    startActivity(intent);
+                    return true;
+                }
+            });
         }
         else{
             Log.v(TAG,"Error: Setting OnLoadFinished");
