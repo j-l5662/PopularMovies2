@@ -86,21 +86,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
       //  Stetho.initialize(Stetho.newInitializerBuilder(this).enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this)).build());
     }
 
-//    @Override
-//    protected void onResume() {
-//        super.onResume();
-//        Bundle bundle;
-//        if (selectionSort == 2) {
-//            bundle = new Bundle();
-//            bundle.putInt(MOVIEDETAILS_EXTRA, selectionSort);
-//            favoriteQuery(bundle);
-//        } else {
-//            bundle = new Bundle();
-//            bundle.putInt(MOVIEDETAILS_EXTRA, selectionSort);
-//            movieQuery(bundle);
-//        }
-//    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -211,31 +196,30 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     private void movieQuery(Bundle bundle){
         LoaderManager loaderManager = getSupportLoaderManager();
         Loader<ArrayList<MovieDetail>> loader = loaderManager.getLoader(MOVIES_LOADER);
-        Loader<ArrayList<MovieDetail>> favloader = loaderManager.getLoader(FAVORITE_MOVIE_LOADER);
+        Loader<ArrayList<MovieDetail>> favLoader = loaderManager.getLoader(FAVORITE_MOVIE_LOADER);
         if(loader == null){
             loaderManager.initLoader(MOVIES_LOADER,bundle,querySortedMovieLoader);
         }
         else {
-            Log.v(TAG,"!@#@!#@onloadfinish" + Integer.toString(selectionSort));
             loaderManager.restartLoader(MOVIES_LOADER, bundle, querySortedMovieLoader);
         }
-        if(favloader != null){
+        if(favLoader != null){
             loaderManager.destroyLoader(FAVORITE_MOVIE_LOADER);
         }
     }
 
     private void favoriteQuery(Bundle bundle) {
         LoaderManager loaderManager = getSupportLoaderManager();
-        Loader<ArrayList<MovieDetail>> favloader = loaderManager.getLoader(FAVORITE_MOVIE_LOADER);
-        Loader<ArrayList<MovieDetail>> queryloader = loaderManager.getLoader(MOVIES_LOADER);
+        Loader<ArrayList<MovieDetail>> favLoader = loaderManager.getLoader(FAVORITE_MOVIE_LOADER);
+        Loader<ArrayList<MovieDetail>> queryLoader = loaderManager.getLoader(MOVIES_LOADER);
 
-        if(favloader == null){
+        if(favLoader == null){
             loaderManager.initLoader(FAVORITE_MOVIE_LOADER,bundle,favoriteMovieLoader);
         }
         else {
             loaderManager.restartLoader(FAVORITE_MOVIE_LOADER, bundle, favoriteMovieLoader);
         }
-        if(queryloader != null){
+        if(queryLoader != null){
             loaderManager.destroyLoader(MOVIES_LOADER);
         }
     }
@@ -282,7 +266,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                             ArrayList<MovieDetail> jsonMovieList = MovieDbUtils.getsortedMovieDetails(jsonMovieResponse);
                             return jsonMovieList;
                         } else {
-                            Toast.makeText(MainActivity.this,"Error Connecting to Internet",Toast.LENGTH_SHORT).show();
                             return null;
                         }
                     } catch (Exception e) {
@@ -307,6 +290,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                 getLoaderManager().destroyLoader(loader.getId());
             }
             else{
+                Toast.makeText(getApplicationContext(),"Error Connecting to Internet",Toast.LENGTH_SHORT).show();
                 Log.v(TAG,"Error: OnLoadFinished Setting Adapter");
             }
         }
@@ -340,16 +324,39 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                 public ArrayList<MovieDetail> loadInBackground() {
                     Cursor cursor = getAllFavMovies();
                     ArrayList<MovieDetail> favoritedMovies = new ArrayList<>();
+
                     try{
-                        while(cursor.moveToNext()){
-                            int movieIDColumn = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID);
+                        if(isOnline()){
+                            while(cursor.moveToNext()){
+                                int movieIDColumn = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID);
+                                int movieID = cursor.getInt(movieIDColumn);
 //                            int movieTitle = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_TITLE);
-                            int movieID = cursor.getInt(movieIDColumn);
-                            URL url = NetworkUtils.buildmovieURL(movieID);
-                            //Log.v(TAG,"Favorite Movie " +url.toString());
-                            String jsonMovieDetails = NetworkUtils.getURLResponse(url);
-                            MovieDetail favMovie = MovieDbUtils.getMovieDetails(jsonMovieDetails);
-                            favoritedMovies.add(favMovie);
+                                URL url = NetworkUtils.buildmovieURL(movieID);
+                                //Log.v(TAG,"Favorite Movie " +url.toString());
+                                String jsonMovieDetails = NetworkUtils.getURLResponse(url);
+                                MovieDetail favMovie = MovieDbUtils.getMovieDetails(jsonMovieDetails);
+                                favoritedMovies.add(favMovie);
+                            }
+                        }
+                        else{
+                            while(cursor.moveToNext()){
+                                int movieIDColumn = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID);
+                                int movieID = cursor.getInt(movieIDColumn);
+                                int movieTitle = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_TITLE);
+                                int movieReleaseDate = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_RELEASEDATE);
+                                int movieRating = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_RATING);
+                                int movieSynopsis = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_SYNOPSIS);
+
+                                String title = cursor.getString(movieTitle);
+                                String release = cursor.getString(movieReleaseDate);
+                                int rating = cursor.getInt(movieRating);
+                                String synopsis = cursor.getString(movieSynopsis);
+                                String picture =  getFilesDir().getAbsoluteFile()+"/" + MovieContract.MovieEntry.TABLE_NAME +"/movie"+ movieID +".jpg";
+                                Log.v(TAG,picture);
+                                MovieDetail favMovie = new MovieDetail(movieID,title,picture,synopsis,rating,release);
+
+                                favoritedMovies.add(favMovie);
+                            }
                         }
                     } catch (Exception e){
                         e.printStackTrace();

@@ -2,6 +2,8 @@ package com.johannlau.popularmovies.utilities;
 
 import android.content.Context;
 
+import com.johannlau.popularmovies.data.MovieContract;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,6 +16,8 @@ public final class MovieDbUtils {
 
     private static final String baseURL = "http://image.tmdb.org/t/p/";
     private static final String phoneSize = "w185";
+
+//    public static final String movieImageDirectory = getFilesDir().getAbsoluteFile()+"/" + MovieContract.MovieEntry.TABLE_NAME +"/";
 
     public static ArrayList<MovieDetail> getsortedMovieDetails(String moviesJsonStr) throws JSONException {
 

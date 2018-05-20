@@ -6,7 +6,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.databinding.DataBindingUtil;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -17,6 +19,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.facebook.stetho.Stetho;
 import com.johannlau.popularmovies.data.FavoriteMovieDbHelper;
@@ -25,6 +28,12 @@ import com.johannlau.popularmovies.databinding.MoviedetailActivityBinding;
 import com.johannlau.popularmovies.utilities.MovieDbUtils;
 import com.johannlau.popularmovies.utilities.MovieDetail;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class MovieDetailActivity extends AppCompatActivity {
 
@@ -42,9 +51,10 @@ public class MovieDetailActivity extends AppCompatActivity {
 
     private MovieDetail movieDetail;
 
-    private final String trailerLabel = "Movie_Data";
+    private final String trailerLabel ="Movie_Data";
     private final String reviewLabel ="Review_Data";
 
+    public String movieImageDirectory;
     private boolean favorited = false;
 
 
@@ -76,10 +86,17 @@ public class MovieDetailActivity extends AppCompatActivity {
         if(startedIntent.hasExtra(trailerLabel)){
             movieDetail = startedIntent.getParcelableExtra(trailerLabel);
             binding.movieTitleTv.setText(movieDetail.returnMovieTitle());
-            Picasso.with(this).load(movieDetail.returnMoviePoster()).into(binding.movieDetailIv);
             binding.moviePlotTv.setText(movieDetail.returnPlotSynopsis());
             binding.movieRatingTv.setText(Integer.toString(movieDetail.returnVoteAverage()) + "/10");
             binding.movieReleaseTv.setText(MovieDbUtils.edit_Date(movieDetail.returnReleaseDate()));
+            String imageURI = movieDetail.returnMoviePoster();
+            if(imageURI.substring(0,5).equals("/data")){
+                File file = new File(imageURI);
+                Picasso.with(this).load(file).into(binding.movieDetailIv);
+            }
+            else {
+                Picasso.with(this).load(imageURI).into(binding.movieDetailIv);
+            }
         }
         binding.watchTrailerBt.setOnClickListener( new TrailerHandler());
         binding.readReviewBt.setOnClickListener(new ReviewHandler());
@@ -87,7 +104,8 @@ public class MovieDetailActivity extends AppCompatActivity {
         //Data base initialization
         FavoriteMovieDbHelper database = new FavoriteMovieDbHelper(this);
         mDb = database.getWritableDatabase();
-
+        movieImageDirectory = getFilesDir().getAbsoluteFile()+"/" + MovieContract.MovieEntry.TABLE_NAME +"/movie";
+//        Log.i(TAG,movieImageDirectory);
         //Shared Preference for Favorite Movie
         mPreferences = this.getPreferences(Context.MODE_PRIVATE);
         favorited = mPreferences.getBoolean(movieDetail.returnMovieTitle()+favorite_choice,favorited);
@@ -102,6 +120,10 @@ public class MovieDetailActivity extends AppCompatActivity {
     public class TrailerHandler implements View.OnClickListener {
         @Override
         public void onClick(View v) {
+            if(!isOnline()){
+                Toast.makeText(MovieDetailActivity.this,"Not Online",Toast.LENGTH_SHORT);
+                return;
+            }
             Context context = MovieDetailActivity.this;
             int movieID = movieDetail.returnMovieID();
             Class destinationActivity = MovieTrailerActivity.class;
@@ -114,6 +136,10 @@ public class MovieDetailActivity extends AppCompatActivity {
     public class ReviewHandler implements View.OnClickListener {
         @Override
         public void onClick(View v) {
+            if(!isOnline()){
+                Toast.makeText(MovieDetailActivity.this,"Not Online",Toast.LENGTH_SHORT);
+                return;
+            }
             Context context = MovieDetailActivity.this;
             int movieID = movieDetail.returnMovieID();
             Class destinationActivity = MovieReviewActivity.class;
@@ -129,6 +155,21 @@ public class MovieDetailActivity extends AppCompatActivity {
             Uri deletedUri = MovieContract.MovieEntry.CONTENT_URI;
             deletedUri = deletedUri.buildUpon().appendPath(Integer.toString(movieDetail.returnMovieID())).build();
             int deletedItem = getContentResolver().delete(deletedUri,null,null);
+
+            File file = new File(movieImageDirectory + Integer.toString(movieDetail.returnMovieID())+".jpg");
+            if(file.exists()){
+                if(file.delete()){
+                    Log.v(TAG,"File Deleted");
+                }
+                else{
+                    Log.v(TAG,"File Not Deleted");
+                }
+            }
+            //Debugging TODO remove
+            else{
+                Log.v(TAG,"File Not FOund");
+            }
+
             Log.v(TAG,"Deleted: " + Integer.toString(deletedItem));
             changeButtonColor(favorited);
         }
@@ -137,8 +178,15 @@ public class MovieDetailActivity extends AppCompatActivity {
 
             contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID, movieDetail.returnMovieID());
             contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_TITLE,movieDetail.returnMovieTitle());
-
+            contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_SYNOPSIS,movieDetail.returnPlotSynopsis());
+            contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_RATING,Integer.toString(movieDetail.returnVoteAverage()));
+            contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_RELEASEDATE,movieDetail.returnReleaseDate());
             Uri uri = getContentResolver().insert(MovieContract.MovieEntry.CONTENT_URI,contentValues);
+            // Poster Path: MovieContract.MovieEntry.TABLE_NAME + movieID
+            //String posterPath = getFilesDir().getAbsolutePath() + MovieContract.MovieEntry.TABLE_NAME + movieDetail.returnMovieID();
+            Log.v(TAG,Integer.toString(movieDetail.returnMovieID()));
+            saveImage(this,movieDetail.returnMoviePoster(),Integer.toString(movieDetail.returnMovieID()));
+
             if(uri != null ){
                 Log.v(TAG,"Inserted: " + uri.toString());
             }
@@ -167,5 +215,51 @@ public class MovieDetailActivity extends AppCompatActivity {
             editor.apply();
             binding.favoriteBtn.setColorFilter(Color.WHITE);
         }
+    }
+
+    public Target getTarget(final String id){
+        Target target = new Target() {
+            @Override
+            public void onBitmapLoaded(final Bitmap bitmap, Picasso.LoadedFrom from) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        File file = new File(movieImageDirectory + id+".jpg");
+                        Log.v(TAG,"Created File: " + movieImageDirectory+id);
+                        try{
+                            if(!file.getParentFile().exists()){
+                                file.getParentFile().mkdirs();
+                            }
+                            if(!file.exists()){
+                                file.createNewFile();
+                            }
+
+                            FileOutputStream outputStream = new FileOutputStream(file);
+                            bitmap.compress(Bitmap.CompressFormat.JPEG,80, outputStream);
+                            outputStream.flush();
+                            outputStream.close();
+                        } catch (IOException e){
+                            e.printStackTrace();
+                            Log.e(TAG,"Error: Loading Image");
+                        }
+                    }
+                }).start();
+            }
+
+            @Override
+            public void onBitmapFailed(Drawable errorDrawable) {
+
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+            }
+        };
+        return target;
+    }
+
+    private void saveImage(Context context,String url,String movieID){
+        Picasso.with(context).load(url).into(getTarget(movieID));
     }
 }

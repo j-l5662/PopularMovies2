@@ -80,7 +80,6 @@ public class MovieReviewActivity extends AppCompatActivity implements LoaderMana
                 try{
                     if(isOnline()){
                         URL url = NetworkUtils.buildReviewURL(movieID);
-                        Log.v(TAG,url.toString());
                         String jsonReviewResponse = NetworkUtils.getURLResponse(url);
                         ArrayList<ReviewInfo> reviewTrailersList = ReviewUtils.getReviewDetails(jsonReviewResponse);
                         return reviewTrailersList;

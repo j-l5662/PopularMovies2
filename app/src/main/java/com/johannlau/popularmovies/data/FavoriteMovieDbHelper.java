@@ -8,7 +8,7 @@ public class FavoriteMovieDbHelper extends SQLiteOpenHelper {
 
     private static final String database_name = "favoriteMovie.db";
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public FavoriteMovieDbHelper(Context context){
         super(context,database_name,null,DATABASE_VERSION);
@@ -19,7 +19,10 @@ public class FavoriteMovieDbHelper extends SQLiteOpenHelper {
                 MovieContract.MovieEntry.TABLE_NAME + " (" +
                 MovieContract.MovieEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID + " INTEGER NOT NULL," +
-                MovieContract.MovieEntry.COLUMN_NAME_MOVIE_TITLE + " TEXT NOT NULL" + ");";
+                MovieContract.MovieEntry.COLUMN_NAME_MOVIE_TITLE + " TEXT NOT NULL," +
+                MovieContract.MovieEntry.COLUMN_NAME_MOVIE_SYNOPSIS + " TEXT NOT NULL," +
+                MovieContract.MovieEntry.COLUMN_NAME_MOVIE_RATING + " INTEGER NOT NULL," +
+                MovieContract.MovieEntry.COLUMN_NAME_MOVIE_RELEASEDATE + " TEXT NOT NULL "+ ");";
         db.execSQL(SQL_CREATE_MOVIE_DB);
     }
 

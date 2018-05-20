@@ -1,8 +1,11 @@
 package com.johannlau.popularmovies.adapters;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +15,7 @@ import com.johannlau.popularmovies.utilities.MovieDetail;
 import com.johannlau.popularmovies.R;
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewHolder> {
@@ -39,7 +43,6 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
     @Override
     public MovieViewHolder onCreateViewHolder(@NonNull final ViewGroup parent, int viewType) {
 
-
         Context context = parent.getContext();
 
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -55,7 +58,14 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
 
     @Override
     public void onBindViewHolder(@NonNull MovieViewHolder holder, int position) {
-        Picasso.with(context).load(movieList.get(position).returnMoviePoster()).into(holder.listMovieView);
+        String movieURI = movieList.get(position).returnMoviePoster();
+        if(movieURI.substring(0,5).equals("/data")){
+            File file = new File(movieURI);
+            Picasso.with(context).load(file).into(holder.listMovieView);
+        }
+        else {
+            Picasso.with(context).load(movieURI).into(holder.listMovieView);
+        }
     }
 
     @Override
