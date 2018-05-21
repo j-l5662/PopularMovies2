@@ -1,5 +1,8 @@
 package com.johannlau.popularmovies.utilities;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.util.*;
 
@@ -14,7 +17,7 @@ import java.util.Scanner;
 public class NetworkUtils {
 
     //Include API Key
-    private final static String apiKey = "";
+    private final static String apiKey = "fe88ffc8466992c2f7765aefe90f0388";
 
 
     private final static String movieURL = "http://api.themoviedb.org/3/movie/?api_key=";
@@ -127,4 +130,12 @@ public class NetworkUtils {
             urlConnection.disconnect();
         }
     }
+    public static boolean isOnline(Context context){
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+        return networkInfo != null && networkInfo.isConnectedOrConnecting();
+    }
+
+
 }

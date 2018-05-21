@@ -1,10 +1,10 @@
 package com.johannlau.popularmovies;
 
+import android.content.AsyncQueryHandler;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -21,7 +21,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.johannlau.popularmovies.data.FavoriteMovieDbHelper;
 import com.johannlau.popularmovies.data.MovieContract;
 import com.johannlau.popularmovies.databinding.MoviedetailActivityBinding;
 import com.johannlau.popularmovies.utilities.MovieDbUtils;
@@ -38,8 +37,6 @@ public class MovieDetailActivity extends AppCompatActivity {
     private static final String TAG = MovieDetailActivity.class.getSimpleName();
 
     MoviedetailActivityBinding binding;
-
-    private SQLiteDatabase mDb;
 
     SharedPreferences mPreferences;
     private static final String favorite_choice = "favorite";
@@ -59,7 +56,6 @@ public class MovieDetailActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mDb.close();
     }
 
     @Override
@@ -99,9 +95,6 @@ public class MovieDetailActivity extends AppCompatActivity {
         binding.watchTrailerBt.setOnClickListener( new TrailerHandler());
         binding.readReviewBt.setOnClickListener(new ReviewHandler());
 
-        //Data base initialization
-        FavoriteMovieDbHelper database = new FavoriteMovieDbHelper(this);
-        mDb = database.getWritableDatabase();
         movieImageDirectory = getFilesDir().getAbsoluteFile()+"/" + MovieContract.MovieEntry.TABLE_NAME +"/movie";
 
         //Shared Preference for Favorite Movie
@@ -152,12 +145,16 @@ public class MovieDetailActivity extends AppCompatActivity {
         if(favorited){
             Uri deletedUri = MovieContract.MovieEntry.CONTENT_URI;
             deletedUri = deletedUri.buildUpon().appendPath(Integer.toString(movieDetail.returnMovieID())).build();
-            int deletedItem = getContentResolver().delete(deletedUri,null,null);
+//            int deletedItem = getContentResolver().delete(deletedUri,null,null);
+
+            AsyncQueryHandler asyncQueryHandler = new AsyncQueryHandler(getContentResolver()) {};
+
+            asyncQueryHandler.startDelete(1,null,deletedUri,null,null);
 
             File file = new File(movieImageDirectory + Integer.toString(movieDetail.returnMovieID())+".jpg");
             if(file.exists()){
                 if(file.delete()){
-                    Log.v(TAG,"File Deleted: "+ deletedItem);
+                    Log.v(TAG,"File Deleted: !");
                 }
                 else{
                     Log.v(TAG,"File Not Deleted");
@@ -215,7 +212,6 @@ public class MovieDetailActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         File file = new File(movieImageDirectory + id+".jpg");
-                        Log.v(TAG,"Created File: " + movieImageDirectory+id);
                         try{
                             if(!file.getParentFile().exists()){
                                 file.getParentFile().mkdirs();
@@ -252,4 +248,5 @@ public class MovieDetailActivity extends AppCompatActivity {
     private void saveImage(Context context,String url,String movieID){
         Picasso.with(context).load(url).into(getTarget(movieID));
     }
+
 }

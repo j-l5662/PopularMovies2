@@ -21,19 +21,15 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
     private Context context;
     private ArrayList<MovieDetail> movieList;
 
-    private int mCount;
-
     final private ImageItemClickListener mOnClickListener;
     public interface ImageItemClickListener {
         void onListItemClick(int clickedItemIndex);
     }
 
-    public MoviesAdapter(Context context, ArrayList<MovieDetail> arrayList,ImageItemClickListener listener,int count) {
+    public MoviesAdapter(Context context, ArrayList<MovieDetail> arrayList,ImageItemClickListener listener) {
         this.context = context;
         this.movieList = arrayList;
         this.mOnClickListener = listener;
-        this.mCount = count;
-
     }
 
     @NonNull
@@ -66,13 +62,18 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
     }
 
     @Override
-    public int getItemCount() {
-        return mCount;
+    public long getItemId(int position) {
+        return position;
     }
 
-    public void clearAdapter(){
-        movieList.clear();
-        notifyDataSetChanged();
+    @Override
+    public int getItemViewType(int position) {
+        return position;
+    }
+
+    @Override
+    public int getItemCount() {
+        return movieList.size();
     }
 
     class MovieViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -89,5 +90,16 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieViewH
             int clickedPosition = getAdapterPosition();
             mOnClickListener.onListItemClick(clickedPosition);
         }
+    }
+    public void swapData(ArrayList<MovieDetail> movieDetails){
+        if(movieDetails != null){
+            movieList.clear();
+            movieList.addAll(movieDetails);
+
+        }
+        else{
+            movieList = movieDetails;
+        }
+        notifyDataSetChanged();
     }
 }
