@@ -12,7 +12,6 @@ public class TrailerUtils {
 
     public static ArrayList<TrailersInfo> getTrailersDetails(String trailersJsonStr) throws JSONException {
         ArrayList<TrailersInfo> trailersList = new ArrayList<>();
-       // Log.v(TAG,trailersJsonStr);
         JSONObject trailersJSON = new JSONObject(trailersJsonStr);
 
         JSONArray results = trailersJSON.getJSONArray("results");

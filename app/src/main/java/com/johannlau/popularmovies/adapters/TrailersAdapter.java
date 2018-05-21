@@ -1,16 +1,20 @@
 package com.johannlau.popularmovies.adapters;
 
-import android.app.*;
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
-import android.view.*;
-import android.widget.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.johannlau.popularmovies.R;
 import com.johannlau.popularmovies.utilities.TrailersInfo;
-import com.squareup.picasso.*;
+import com.squareup.picasso.Picasso;
 
-import java.util.*;
+import java.util.List;
 
 public class TrailersAdapter extends ArrayAdapter<TrailersInfo> {
 

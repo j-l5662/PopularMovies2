@@ -13,8 +13,6 @@ import java.util.Scanner;
 
 public class NetworkUtils {
 
-    private static final String TAG = NetworkUtils.class.getName();
-
     //Include API Key
     private final static String apiKey = "";
 
@@ -26,7 +24,10 @@ public class NetworkUtils {
 
     private final static String trailerURL = "http://api.themoviedb.org/3/movie//videos?api_key=";
     private final static String reviewURL = "http://api.themoviedb.org/3/movie//reviews?api_key=";
-    //Sample URL https://api.themoviedb.org/3/movie/76341?api_key={api_key}
+
+    private final static int reviewURLOffset = 17;
+    private final static int trailerURLOffset = 16;
+    private final static int movieURLOffset = 9;
 
     public static URL buildsortURL(int choice) {
         String baseURL;
@@ -52,7 +53,7 @@ public class NetworkUtils {
             return null;
         }
         String videoID = Integer.toString(id);
-        String baseURL = new StringBuilder(movieURL).insert(movieURL.length() - 9, videoID).toString();
+        String baseURL = new StringBuilder(movieURL).insert(movieURL.length() - movieURLOffset, videoID).toString();
         Uri builtUri = Uri.parse(baseURL + apiKey).buildUpon()
                 .build();
 
@@ -72,7 +73,7 @@ public class NetworkUtils {
             return null;
         }
         String videoID = Integer.toString(id);
-        String baseURL = new StringBuilder(trailerURL).insert(trailerURL.length()-16,videoID).toString();
+        String baseURL = new StringBuilder(trailerURL).insert(trailerURL.length()- trailerURLOffset,videoID).toString();
         Uri builtUri = Uri.parse(baseURL + apiKey).buildUpon()
                 .build();
 
@@ -92,7 +93,7 @@ public class NetworkUtils {
             return null;
         }
         String videoID = Integer.toString(id);
-        String baseURL = new StringBuilder(reviewURL).insert(reviewURL.length()-17,videoID).toString();
+        String baseURL = new StringBuilder(reviewURL).insert(reviewURL.length()-reviewURLOffset,videoID).toString();
         Uri builtUri = Uri.parse(baseURL + apiKey).buildUpon()
                 .build();
 

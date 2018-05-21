@@ -1,9 +1,5 @@
 package com.johannlau.popularmovies.utilities;
 
-import android.content.Context;
-
-import com.johannlau.popularmovies.data.MovieContract;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

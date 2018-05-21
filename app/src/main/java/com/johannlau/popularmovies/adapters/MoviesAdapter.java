@@ -1,18 +1,15 @@
 package com.johannlau.popularmovies.adapters;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.johannlau.popularmovies.utilities.MovieDetail;
 import com.johannlau.popularmovies.R;
+import com.johannlau.popularmovies.utilities.MovieDetail;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;

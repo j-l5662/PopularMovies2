@@ -1,22 +1,29 @@
 package com.johannlau.popularmovies;
 
 
-import android.content.*;
-import android.net.*;
-import android.os.*;
+import android.content.Context;
+import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.support.v7.app.*;
-import android.util.*;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
-import android.widget.*;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import com.johannlau.popularmovies.adapters.TrailersAdapter;
-import com.johannlau.popularmovies.utilities.*;
+import com.johannlau.popularmovies.utilities.MovieDetail;
+import com.johannlau.popularmovies.utilities.NetworkUtils;
+import com.johannlau.popularmovies.utilities.TrailerUtils;
+import com.johannlau.popularmovies.utilities.TrailersInfo;
 
-import java.net.*;
-import java.util.*;
+import java.net.URL;
+import java.util.ArrayList;
 /*
     Example from Android Custom Array Adapter
  */
@@ -77,7 +84,6 @@ public class MovieTrailerActivity extends AppCompatActivity implements LoaderMan
                 try{
                     if(isOnline()){
                         URL url = NetworkUtils.buildtrailerURL(movieID);
-                        Log.v(TAG,url.toString());
                         String jsonTrailerResponse = NetworkUtils.getURLResponse(url);
                         ArrayList<TrailersInfo> jsonTrailerList = TrailerUtils.getTrailersDetails(jsonTrailerResponse);
                         return jsonTrailerList;

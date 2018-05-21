@@ -1,41 +1,49 @@
 package com.johannlau.popularmovies;
 
 
-import android.content.*;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.*;
-import android.os.*;
-import android.support.annotation.*;
-import android.support.v4.app.*;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
-import android.support.v7.app.*;
-import android.support.v7.widget.*;
-import android.util.*;
-import android.view.*;
-import android.widget.*;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.johannlau.popularmovies.adapters.MoviesAdapter;
 import com.johannlau.popularmovies.data.FavoriteMovieDbHelper;
 import com.johannlau.popularmovies.data.MovieContract;
-import com.johannlau.popularmovies.utilities.*;
+import com.johannlau.popularmovies.utilities.MovieDbUtils;
+import com.johannlau.popularmovies.utilities.MovieDetail;
+import com.johannlau.popularmovies.utilities.NetworkUtils;
 
-import java.net.*;
-import java.util.*;
+import java.net.URL;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements MoviesAdapter.ImageItemClickListener{
 
     private static final String TAG = MainActivity.class.getName();
     private static final int COLUMNS = 2;
     private static final String lifecycleCallback = "callback";
-    private static final String MOVIEDETAILS_EXTRA = "movieDetail";
+    private static final String MOVIEDETAILS_EXTRA = "Movie_Data";
+
 
     private static final int FAVORITE_MOVIE_LOADER = 12;
     private static final int MOVIES_LOADER = 22;
 
-
-    private static Bundle mRecyclerViewState;
+    private int selectionSort = 1;
 
     private SQLiteDatabase mDb;
 
@@ -45,8 +53,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     private RecyclerView mRecyclerView;
     private ArrayList<MovieDetail> moviesList;
 
-    private int selectionSort = 1;
-    Parcelable pState;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +90,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
         FavoriteMovieDbHelper database = new FavoriteMovieDbHelper(this);
         mDb = database.getReadableDatabase();
 
-      //  Stetho.initialize(Stetho.newInitializerBuilder(this).enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this)).build());
     }
 
     @Override
@@ -92,6 +98,12 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
         mDb.close();
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt(lifecycleCallback,selectionSort);
+        super.onSaveInstanceState(outState);
+
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -137,61 +149,9 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
         MovieDetail movieDetail = moviesList.get(clickedItemIndex);
         Class destinationActivity = MovieDetailActivity.class;
         Intent intent = new Intent(context,destinationActivity);
-        intent.putExtra("Movie_Data",movieDetail);
+        intent.putExtra(MOVIEDETAILS_EXTRA,movieDetail);
         startActivity(intent);
     }
-
-//    @NonNull
-//    @Override
-//    public Loader<ArrayList<MovieDetail>> onCreateLoader(final int id, @Nullable final Bundle args) {
-//        return new AsyncTaskLoader<ArrayList<MovieDetail>>(this) {
-//            @Override
-//            protected void onStartLoading() {
-//                super.onStartLoading();
-//                if (args == null) {
-//                    return;
-//                }
-//                forceLoad();
-//            }
-//
-//            @Override
-//            public ArrayList<MovieDetail> loadInBackground() {
-//
-//                int choice = args.getInt(MOVIEDETAILS_EXTRA);
-//                try {
-//                    if (isOnline()) {
-//                        URL url = NetworkUtils.buildsortURL(choice);
-//                        String jsonMovieResponse = NetworkUtils.getURLResponse(url);
-//                        ArrayList<MovieDetail> jsonMovieList = MovieDbUtils.getsortedMovieDetails(jsonMovieResponse);
-//                        return jsonMovieList;
-//                    } else {
-//                        Toast.makeText(MainActivity.this,"Error Connecting to Internet",Toast.LENGTH_SHORT).show();
-//                        return null;
-//                    }
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                    return null;
-//                }
-//            }
-//        };
-//    }
-//
-//    @Override
-//    public void onLoadFinished(@NonNull Loader<ArrayList<MovieDetail>> loader, ArrayList<MovieDetail> data) {
-//        if( data!= null){
-//            moviesList = data;
-//            mAdapter = new MoviesAdapter(MainActivity.this,moviesList,MainActivity.this,moviesList.size());
-//            mAdapter.notifyDataSetChanged();
-//            mRecyclerView.setAdapter(mAdapter);
-//            Log.v(TAG,"!@#@!#@onloadfinish" + Integer.toString(selectionSort));
-//        }
-//        else{
-//            Log.v(TAG,"Error: OnLoadFinished Setting Adapter");
-//        }
-//    }
-//
-//    @Override
-//    public void onLoaderReset(@NonNull Loader<ArrayList<MovieDetail>> loader) {    }
 
     private void movieQuery(Bundle bundle){
         LoaderManager loaderManager = getSupportLoaderManager();
@@ -278,9 +238,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
         @Override
         public void onLoadFinished(@NonNull Loader<ArrayList<MovieDetail>> loader, ArrayList<MovieDetail> data) {
-//            if(selectionSort == 2){
-//                return;
-//            }
             if( data!= null){
                 moviesList = data;
                 mAdapter.clearAdapter();
@@ -291,7 +248,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
             }
             else{
                 Toast.makeText(getApplicationContext(),"Error Connecting to Internet",Toast.LENGTH_SHORT).show();
-                Log.v(TAG,"Error: OnLoadFinished Setting Adapter");
             }
         }
 
@@ -330,9 +286,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                             while(cursor.moveToNext()){
                                 int movieIDColumn = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID);
                                 int movieID = cursor.getInt(movieIDColumn);
-//                            int movieTitle = cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_TITLE);
                                 URL url = NetworkUtils.buildmovieURL(movieID);
-                                //Log.v(TAG,"Favorite Movie " +url.toString());
                                 String jsonMovieDetails = NetworkUtils.getURLResponse(url);
                                 MovieDetail favMovie = MovieDbUtils.getMovieDetails(jsonMovieDetails);
                                 favoritedMovies.add(favMovie);
@@ -360,7 +314,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                         }
                     } catch (Exception e){
                         e.printStackTrace();
-                        Log.v(TAG,"Error Querying Data");
+                        Log.e(TAG,"Error Querying Data");
                     }
                     finally {
                         cursor.close();
@@ -372,9 +326,6 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
         @Override
         public void onLoadFinished(@NonNull Loader<ArrayList<MovieDetail>> loader, ArrayList<MovieDetail> data) {
-//            if(selectionSort != 2){
-//                return;
-//            }
             if( data!= null){
                 if( data.size() == 0 ) {
                     Toast.makeText(MainActivity.this,"No Movies",Toast.LENGTH_SHORT).show();
@@ -387,7 +338,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                 mAdapter.notifyDataSetChanged();
             }
             else{
-                Log.v(TAG,"Error: OnLoadFinished Setting Adapter");
+                Log.e(TAG,"Error: OnLoadFinished Setting Adapter");
             }
         }
 

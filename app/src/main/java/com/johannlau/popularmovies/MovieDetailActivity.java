@@ -21,7 +21,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.facebook.stetho.Stetho;
 import com.johannlau.popularmovies.data.FavoriteMovieDbHelper;
 import com.johannlau.popularmovies.data.MovieContract;
 import com.johannlau.popularmovies.databinding.MoviedetailActivityBinding;
@@ -31,7 +30,6 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -105,7 +103,7 @@ public class MovieDetailActivity extends AppCompatActivity {
         FavoriteMovieDbHelper database = new FavoriteMovieDbHelper(this);
         mDb = database.getWritableDatabase();
         movieImageDirectory = getFilesDir().getAbsoluteFile()+"/" + MovieContract.MovieEntry.TABLE_NAME +"/movie";
-//        Log.i(TAG,movieImageDirectory);
+
         //Shared Preference for Favorite Movie
         mPreferences = this.getPreferences(Context.MODE_PRIVATE);
         favorited = mPreferences.getBoolean(movieDetail.returnMovieTitle()+favorite_choice,favorited);
@@ -159,21 +157,17 @@ public class MovieDetailActivity extends AppCompatActivity {
             File file = new File(movieImageDirectory + Integer.toString(movieDetail.returnMovieID())+".jpg");
             if(file.exists()){
                 if(file.delete()){
-                    Log.v(TAG,"File Deleted");
+                    Log.v(TAG,"File Deleted: "+ deletedItem);
                 }
                 else{
                     Log.v(TAG,"File Not Deleted");
                 }
             }
-            //Debugging TODO remove
-            else{
-                Log.v(TAG,"File Not FOund");
-            }
 
-            Log.v(TAG,"Deleted: " + Integer.toString(deletedItem));
             changeButtonColor(favorited);
         }
         else{
+            //Inserting Movie Detail into the Content Provider Database
             ContentValues contentValues = new ContentValues();
 
             contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_ID, movieDetail.returnMovieID());
@@ -182,11 +176,7 @@ public class MovieDetailActivity extends AppCompatActivity {
             contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_RATING,Integer.toString(movieDetail.returnVoteAverage()));
             contentValues.put(MovieContract.MovieEntry.COLUMN_NAME_MOVIE_RELEASEDATE,movieDetail.returnReleaseDate());
             Uri uri = getContentResolver().insert(MovieContract.MovieEntry.CONTENT_URI,contentValues);
-            // Poster Path: MovieContract.MovieEntry.TABLE_NAME + movieID
-            //String posterPath = getFilesDir().getAbsolutePath() + MovieContract.MovieEntry.TABLE_NAME + movieDetail.returnMovieID();
-            Log.v(TAG,Integer.toString(movieDetail.returnMovieID()));
             saveImage(this,movieDetail.returnMoviePoster(),Integer.toString(movieDetail.returnMovieID()));
-
             if(uri != null ){
                 Log.v(TAG,"Inserted: " + uri.toString());
             }
