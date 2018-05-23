@@ -25,6 +25,7 @@ import com.johannlau.popularmovies.data.MovieContract;
 import com.johannlau.popularmovies.databinding.MoviedetailActivityBinding;
 import com.johannlau.popularmovies.utilities.MovieDbUtils;
 import com.johannlau.popularmovies.utilities.MovieDetail;
+import com.johannlau.popularmovies.utilities.NetworkUtils;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -78,6 +79,7 @@ public class MovieDetailActivity extends AppCompatActivity {
         Intent startedIntent = getIntent();
 
         if(startedIntent.hasExtra(trailerLabel)){
+
             movieDetail = startedIntent.getParcelableExtra(trailerLabel);
             binding.movieTitleTv.setText(movieDetail.returnMovieTitle());
             binding.moviePlotTv.setText(movieDetail.returnPlotSynopsis());
@@ -92,7 +94,7 @@ public class MovieDetailActivity extends AppCompatActivity {
                 Picasso.with(this).load(imageURI).into(binding.movieDetailIv);
             }
         }
-        binding.watchTrailerBt.setOnClickListener( new TrailerHandler());
+        binding.watchTrailerBt.setOnClickListener(new TrailerHandler());
         binding.readReviewBt.setOnClickListener(new ReviewHandler());
 
         movieImageDirectory = getFilesDir().getAbsoluteFile()+"/" + MovieContract.MovieEntry.TABLE_NAME +"/movie";
@@ -108,10 +110,16 @@ public class MovieDetailActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(trailerLabel,movieDetail);
+    }
+
     public class TrailerHandler implements View.OnClickListener {
         @Override
         public void onClick(View v) {
-            if(!isOnline()){
+            if(!NetworkUtils.isOnline(MovieDetailActivity.this)){
                 Toast.makeText(MovieDetailActivity.this,"Not Online",Toast.LENGTH_SHORT);
                 return;
             }
@@ -127,7 +135,7 @@ public class MovieDetailActivity extends AppCompatActivity {
     public class ReviewHandler implements View.OnClickListener {
         @Override
         public void onClick(View v) {
-            if(!isOnline()){
+            if(!NetworkUtils.isOnline(MovieDetailActivity.this)){
                 Toast.makeText(MovieDetailActivity.this,"Not Online",Toast.LENGTH_SHORT);
                 return;
             }
@@ -179,13 +187,6 @@ public class MovieDetailActivity extends AppCompatActivity {
             }
             changeButtonColor(favorited);
         }
-    }
-
-    public boolean isOnline(){
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-        return networkInfo != null && networkInfo.isConnectedOrConnecting();
     }
 
     private void changeButtonColor(boolean selection){

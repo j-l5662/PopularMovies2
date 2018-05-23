@@ -94,8 +94,8 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStop() {
+        super.onStop();
         mDb.close();
     }
 

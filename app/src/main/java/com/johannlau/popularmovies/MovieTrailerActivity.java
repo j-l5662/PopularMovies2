@@ -1,16 +1,14 @@
 package com.johannlau.popularmovies;
 
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -65,6 +63,17 @@ public class MovieTrailerActivity extends AppCompatActivity implements LoaderMan
         }
 
         listView = findViewById(R.id.trailer_lists);
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -82,7 +91,7 @@ public class MovieTrailerActivity extends AppCompatActivity implements LoaderMan
             @Override
             public ArrayList<TrailersInfo> loadInBackground() {
                 try{
-                    if(isOnline()){
+                    if(NetworkUtils.isOnline(MovieTrailerActivity.this)){
                         URL url = NetworkUtils.buildtrailerURL(movieID);
                         String jsonTrailerResponse = NetworkUtils.getURLResponse(url);
                         ArrayList<TrailersInfo> jsonTrailerList = TrailerUtils.getTrailersDetails(jsonTrailerResponse);
@@ -129,12 +138,5 @@ public class MovieTrailerActivity extends AppCompatActivity implements LoaderMan
     @Override
     public void onLoaderReset(Loader<ArrayList<TrailersInfo>> loader) {
 
-    }
-
-    public boolean isOnline(){
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-        return networkInfo != null && networkInfo.isConnectedOrConnecting();
     }
 }

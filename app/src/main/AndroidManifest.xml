@@ -21,14 +21,17 @@
         <activity android:name=".MovieDetailActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
+                android:launchMode="singleTop"
                 android:value="com.johannlau.popularmovies.MainActivity"/>
         </activity>
-        <activity android:name=".MovieTrailerActivity">
+        <activity android:name=".MovieTrailerActivity"
+                    android:parentActivityName=".MovieDetailActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.johannlau.popularmovies.MovieDetailActivity"/>
         </activity>
-        <activity android:name=".MovieReviewActivity">
+        <activity android:name=".MovieReviewActivity"
+>
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.johannlau.popularmovies.MovieDetailActivity"/>

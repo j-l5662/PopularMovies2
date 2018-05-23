@@ -6,6 +6,8 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.util.*;
 
+import com.johannlau.popularmovies.BuildConfig;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -17,7 +19,7 @@ import java.util.Scanner;
 public class NetworkUtils {
 
     //Include API Key
-    private final static String apiKey = "";
+    private final static String apiKey = BuildConfig.ApiKey;
 
 
     private final static String movieURL = "http://api.themoviedb.org/3/movie/?api_key=";

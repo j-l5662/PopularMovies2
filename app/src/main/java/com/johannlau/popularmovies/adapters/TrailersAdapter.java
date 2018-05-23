@@ -32,23 +32,27 @@ public class TrailersAdapter extends ArrayAdapter<TrailersInfo> {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.trailerdetail_activity,parent,false);
         }
 
+        View.OnClickListener trailerListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                final TrailersInfo trailersInfo = getItem(position);
+                String url = trailersInfo.formVideo_URL();
+                Uri youtube_link = Uri.parse(url);
+                Intent intent = new Intent(Intent.ACTION_VIEW, youtube_link);
+                if (intent.resolveActivity(getContext().getPackageManager()) != null) {
+                    getContext().startActivity(intent);
+                }
+            }
+        };
         ImageView iconView = convertView.findViewById(R.id.trailer_thumbnail);
         Picasso.with(getContext()).load(trailersInfo.getVideo_thumbnailURL()).into(iconView);
         TextView titleView = convertView.findViewById(R.id.trailer_title);
         titleView.setText(trailersInfo.getVideo_title());
 
-        convertView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-               String url = trailersInfo.formVideo_URL();
-               Uri youtube_link = Uri.parse(url);
-               Intent intent = new Intent(Intent.ACTION_VIEW,youtube_link);
-               if (intent.resolveActivity(getContext().getPackageManager()) !=null){
-                    getContext().startActivity(intent);
-                }
-
-            }
-        });
+        iconView.setOnClickListener(trailerListener);
+        titleView.setOnClickListener(trailerListener);
+        convertView.setOnClickListener(trailerListener);
         return convertView;
 
     }

@@ -9,6 +9,7 @@
         android:layout_height="100dp"
         android:layout_marginTop="8dp"
         android:layout_marginStart="8dp"
+        android:clickable="true"
         android:longClickable="true"/>
     <TextView
         android:id="@+id/trailer_title"
@@ -16,6 +17,7 @@
         android:layout_height="match_parent"
         android:layout_marginTop="50dp"
         android:textColor="@color/white"
+        android:clickable="true"
         android:layout_marginStart="16dp"
         android:longClickable="true"/>
 
