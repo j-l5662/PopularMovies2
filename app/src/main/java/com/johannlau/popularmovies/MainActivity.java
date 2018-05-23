@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     private static final String TAG = MainActivity.class.getName();
     private static final int COLUMNS = 2;
     private static final String lifecycleCallback = "callback";
+    private static final String scrollPosition = "scrollcallback";
     private static final String MOVIEDETAILS_EXTRA = "Movie_Data";
 
 
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
     private static final int MOVIES_LOADER = 22;
 
     private int selectionSort = 1;
-
+    private int mPosition = 0;
     private Cursor mDb;
 
     private MoviesAdapter mAdapter;
@@ -59,32 +60,34 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
         setContentView(R.layout.activity_main);
 
         moviesList = new ArrayList<>();
+
+        mRecyclerView = findViewById(R.id.rv_movies);
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this,COLUMNS));
+
+
+        if(mAdapter == null){
+            mAdapter = new MoviesAdapter(MainActivity.this,moviesList,this);
+            mAdapter.setHasStableIds(true);
+            mRecyclerView.setAdapter(mAdapter);
+        }
         if (savedInstanceState != null){
             if (savedInstanceState.containsKey(lifecycleCallback)){
                 selectionSort = savedInstanceState.getInt(lifecycleCallback);
             }
+            if(savedInstanceState.containsKey(scrollPosition)){
+                mPosition = savedInstanceState.getInt(scrollPosition);
+            }
         }
-
-        mAdapter = new MoviesAdapter(MainActivity.this,moviesList,this);
-        mAdapter.setHasStableIds(true);
         Bundle bundle = new Bundle();
         bundle.putInt(MOVIEDETAILS_EXTRA, selectionSort);
-
         if( selectionSort < 2){
             movieQuery(bundle);
         }
         else{
             favoriteQuery(bundle);
         }
-
-
-        mRecyclerView = findViewById(R.id.rv_movies);
-        mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this,COLUMNS));
-
-        mRecyclerView.setAdapter(mAdapter);
-
-        //Data base initialization using Content Resolvers
+        //Data base initialization using Content Providers
         ContentResolver contentResolver = getContentResolver();
         mDb = contentResolver.query(MovieContract.MovieEntry.CONTENT_URI,null,null,null,null);
 
@@ -98,9 +101,9 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putInt(lifecycleCallback,selectionSort);
         super.onSaveInstanceState(outState);
-
+        outState.putInt(scrollPosition,((GridLayoutManager) mRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition());
+        outState.putInt(lifecycleCallback,selectionSort);
     }
 
     @Override
@@ -119,20 +122,17 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                 selectionSort = 0;
                 bundle = new Bundle();
                 bundle.putInt(MOVIEDETAILS_EXTRA,selectionSort);
-                mRecyclerView.swapAdapter(mAdapter,true);
                 movieQuery(bundle);
                 break;
             case R.id.popular_movie:
                 selectionSort = 1;
                 bundle = new Bundle();
                 bundle.putInt(MOVIEDETAILS_EXTRA,selectionSort);
-                mRecyclerView.swapAdapter(mAdapter,true);
                 movieQuery(bundle);
 
                 break;
             case R.id.favorite_movie:
                 selectionSort = 2;
-                mRecyclerView.swapAdapter(mAdapter,true);
                 bundle = new Bundle();
                 bundle.putInt(MOVIEDETAILS_EXTRA,selectionSort);
                 favoriteQuery(bundle);
@@ -238,6 +238,9 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                 mainActivity.moviesList = data;
                 mainActivity.mAdapter.swapData(data);
                 mainActivity.getLoaderManager().destroyLoader(loader.getId());
+                if(mainActivity.mPosition > 0){
+                    mainActivity.mRecyclerView.getLayoutManager().scrollToPosition(mainActivity.mPosition);
+                }
             }
             else{
                 Toast.makeText(mainActivity.getApplicationContext(),"Error Connecting to Internet",Toast.LENGTH_SHORT).show();
@@ -336,7 +339,9 @@ public class MainActivity extends AppCompatActivity implements MoviesAdapter.Ima
                 mainActivity.moviesList = data;
                 mainActivity.mAdapter.swapData(data);
                 mainActivity.mRecyclerView.swapAdapter(mainActivity.mAdapter,false);
-
+                if(mainActivity.mPosition > 0){
+                    mainActivity.mRecyclerView.getLayoutManager().scrollToPosition(mainActivity.mPosition);
+                }
             }
             else{
                 Log.e(TAG,"Error: OnLoadFinished Setting Adapter");
